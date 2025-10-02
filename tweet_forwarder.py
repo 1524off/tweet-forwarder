@@ -4,7 +4,7 @@ import subprocess
 import json
 
 # === 設定 ===
-USERNAME = "WOS_Japan"   # 監視するユーザー
+USERNAME = "tomarankakin"   # 監視するユーザー
 KEYWORDS = ["ギフトコード", "🎁"]  # 検索ワード
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 

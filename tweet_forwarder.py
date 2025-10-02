@@ -4,8 +4,8 @@ import subprocess
 import json
 
 # === 設定 ===
-USERNAME = "tomarankakin"   # 監視するユーザー
-KEYWORDS = ["ギフトコード", "🎁"]  # 検索ワード
+USERNAME = "tomarankakin"   # ← テスト用（自分のIDに変更済み）
+KEYWORDS = ["ギフトコード"]
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
 # ツイートを取得（snscrape使用）
@@ -25,6 +25,10 @@ def send_to_discord(content):
     requests.post(DISCORD_WEBHOOK_URL, json=data)
 
 if __name__ == "__main__":
+    # 強制送信テスト
+    send_to_discord("🔧 強制テスト：WebhookからDiscord送信は成功しています！")
+
+    # 以下は通常の処理
     tweets = get_latest_tweets(USERNAME, 10)
     for tweet in tweets:
         text = tweet["content"]

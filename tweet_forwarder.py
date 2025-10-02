@@ -1,27 +1,36 @@
-name: Tweet Forwarder
+import os
+import requests
+import subprocess
+import json
 
-on:
-  schedule:
-    - cron: "*/30 * * * *"   # 30分ごとに実行（無料枠に収まる）
-  workflow_dispatch:         # 手動実行も可能
+# === 設定 ===
+USERNAME = "WOS_Japan"               # 本番アカウント
+KEYWORDS = ["ギフトコード", "🎁"]  # 本番用キーワード
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
-jobs:
-  run:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+# ツイートを取得（snscrape使用）
+def get_latest_tweets(username, limit=5):
+    result = subprocess.run(
+        ["snscrape", "--jsonl", "--max-results", str(limit), f"twitter-user:{username}"],
+        capture_output=True, text=True
+    )
+    tweets = []
+    for line in result.stdout.splitlines():
+        tweets.append(json.loads(line))
+    return tweets
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+# Discordに送信
+def send_to_discord(content):
+    data = {"content": content}
+    requests.post(DISCORD_WEBHOOK_URL, json=data)
 
-      - name: Install dependencies
-        run: |
-          pip install requests
-          pip install git+https://github.com/JustAnotherArchivist/snscrape.git
+if __name__ == "__main__":
+    tweets = get_latest_tweets(USERNAME, 10)
+    for tweet in tweets:
+        text = tweet["content"]
+        url = tweet["url"]
 
-      - name: Run script
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: python ./tweet_forwarder.py
+        if any(keyword in text for keyword in KEYWORDS):
+            message = f"🎁 新しい投稿！\n{text}\n{url}"
+            send_to_discord(message)
+            break

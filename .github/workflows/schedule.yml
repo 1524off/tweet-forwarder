@@ -2,7 +2,7 @@ name: Tweet Forwarder
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # 10分ごとに実行
+    - cron: "*/30 * * * *"   # 30分ごとに実行（無料枠に収まる）
   workflow_dispatch:         # 手動実行も可能
 
 jobs:

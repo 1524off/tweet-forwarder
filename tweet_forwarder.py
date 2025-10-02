@@ -26,4 +26,11 @@ def send_to_discord(content):
 
 if __name__ == "__main__":
     tweets = get_latest_tweets(USERNAME, 10)
-    for twe
+    for tweet in tweets:
+        text = tweet["content"]
+        url = tweet["url"]
+
+        if any(keyword in text for keyword in KEYWORDS):
+            message = f"🎁 新しい投稿！\n{text}\n{url}"
+            send_to_discord(message)
+            break

@@ -1,36 +1,38 @@
 import os
-import requests
 import subprocess
-import json
+import requests
 
-# === 設定 ===
-USERNAME = "WOS_Japan"               # 本番アカウント
-KEYWORDS = ["ギフトコード", "🎁"]  # 本番用キーワード
-DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
+def get_latest_tweet():
+    print("🔎 Fetching tweets...")
+    try:
+        # 「ギフト」「ギフトコード」「🎁」のどれかを含む最新ツイートを取得
+        cmd = [
+            "snscrape", "--jsonl", "--max-results", "1",
+            "twitter-search", "from:WOS_Japan ギフト OR ギフトコード OR 🎁"
+        ]
+        result = subprocess.check_output(cmd, text=True)
+        if result.strip():
+            print("✅ Tweet found:", result)
+            return result
+        else:
+            print("⚠️ No tweets found")
+            return None
+    except Exception as e:
+        print("❌ Error fetching tweets:", e)
+        return None
 
-# ツイートを取得（snscrape使用）
-def get_latest_tweets(username, limit=5):
-    result = subprocess.run(
-        ["snscrape", "--jsonl", "--max-results", str(limit), f"twitter-user:{username}"],
-        capture_output=True, text=True
-    )
-    tweets = []
-    for line in result.stdout.splitlines():
-        tweets.append(json.loads(line))
-    return tweets
-
-# Discordに送信
-def send_to_discord(content):
-    data = {"content": content}
-    requests.post(DISCORD_WEBHOOK_URL, json=data)
+def post_to_discord(message):
+    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+    if not webhook_url:
+        print("❌ No webhook URL set!")
+        return
+    print("📤 Posting to Discord...")
+    response = requests.post(webhook_url, json={"content": message})
+    print("📡 Discord response:", response.status_code, response.text)
 
 if __name__ == "__main__":
-    tweets = get_latest_tweets(USERNAME, 10)
-    for tweet in tweets:
-        text = tweet["content"]
-        url = tweet["url"]
-
-        if any(keyword in text for keyword in KEYWORDS):
-            message = f"🎁 新しい投稿！\n{text}\n{url}"
-            send_to_discord(message)
-            break
+    tweet = get_latest_tweet()
+    if tweet:
+        post_to_discord("🎁 Twitterでギフコ発見！\n" + tweet)
+    else:
+        print("🚫 Nothing to send")
